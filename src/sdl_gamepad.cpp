@@ -371,12 +371,13 @@ namespace gamepad
                     */
                 default:
                     send_input(button);
-                    schedule_task(task, now + repeat_delay, buttons_map[button], state);
+                    //schedule_task(task, now + repeat_delay, buttons_map[button], state);
                 }
-            }
-            else {
                 cancel_task(task);
             }
+            //else {//Tecla liberada
+                /*cancel_task(task);*/
+            //}
         }
         }
     }
