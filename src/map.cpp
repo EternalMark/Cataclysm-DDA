@@ -5903,8 +5903,10 @@ std::list<item> map::use_amount( const std::vector<tripoint> &reachable_pts, con
         }
     }
     for( const tripoint &p : reachable_pts ) {
-        std::list<item> tmp = use_amount_square( p, type, quantity, filter );
-        ret.splice( ret.end(), tmp );
+        if( accessible_items( p ) ) {
+            std::list<item> tmp = use_amount_square( p, type, quantity, filter );
+            ret.splice( ret.end(), tmp );
+        }
     }
     return ret;
 }
@@ -10211,6 +10213,10 @@ void map::update_pathfinding_cache( const tripoint &p ) const
 
     if( terrain.has_flag( ter_furn_flag::TFLAG_SHARP ) && !here.has_vehicle_floor( p ) ) {
         cur_value |= PF_SHARP;
+    }
+
+    if( terrain.has_flag( ter_furn_flag::TFLAG_SMALL_PASSAGE ) ) {
+        cur_value |= PF_SMALL_PASSAGE;
     }
 
     cache.special[p.x][p.y] = cur_value;
