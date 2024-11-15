@@ -292,95 +292,47 @@ namespace gamepad
     }
 
 
-    typedef enum
-    {
-        SDL_CONTROLLER_BUTTON_INVALID = -1,
-        SDL_CONTROLLER_BUTTON_A,//0 - Equis
-        SDL_CONTROLLER_BUTTON_B,//1 - Circulo
-        SDL_CONTROLLER_BUTTON_X,//Cuadrado
-        SDL_CONTROLLER_BUTTON_Y,//Triangulo
-        SDL_CONTROLLER_BUTTON_BACK,//Option
-        SDL_CONTROLLER_BUTTON_GUIDE,//Option 
-        SDL_CONTROLLER_BUTTON_START,//Start
-        SDL_CONTROLLER_BUTTON_LEFTSTICK,
-        SDL_CONTROLLER_BUTTON_RIGHTSTICK,
-        SDL_CONTROLLER_BUTTON_LEFTSHOULDER,//L1
-        SDL_CONTROLLER_BUTTON_RIGHTSHOULDER,//R1
-        SDL_CONTROLLER_BUTTON_DPAD_UP,
-        SDL_CONTROLLER_BUTTON_DPAD_DOWN,
-        SDL_CONTROLLER_BUTTON_DPAD_LEFT,
-        SDL_CONTROLLER_BUTTON_DPAD_RIGHT,
-        SDL_CONTROLLER_BUTTON_MISC1,    /* Xbox Series X share button, PS5 microphone button, Nintendo Switch Pro capture button, Amazon Luna microphone button */
-        SDL_CONTROLLER_BUTTON_PADDLE1,  /* Xbox Elite paddle P1 */
-        SDL_CONTROLLER_BUTTON_PADDLE2,  /* Xbox Elite paddle P3 */
-        SDL_CONTROLLER_BUTTON_PADDLE3,  /* Xbox Elite paddle P2 */
-        SDL_CONTROLLER_BUTTON_PADDLE4,  /* Xbox Elite paddle P4 */
-        SDL_CONTROLLER_BUTTON_TOUCHPAD, /* PS4/PS5 touchpad button */
-        SDL_CONTROLLER_BUTTON_MAX
-    } SDL_GamepadM;
-
-
-
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    std::vector<Uint8> gpSequence;
+                                            //A     B       X       Y       OPTION  OPTION  START   LS      RS      LSHR     RSHR   UP      DOWN    LEFT    RIGHT     
+    std::vector<std::vector<int>> keys = {  {27,	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' '},//A
+                                            {' ',	'\n',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' '},//B
+                                            {' ',	' ',	'g',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' '},//X
+                                            {' ',	' ',	' ',	'e',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' '},//Y
+                                            {'s',	't',	'&',	'*',	' ',	' ',	'@',	' ',	' ',	' ',	'{',	' ',	' ',	' ',	' '},//Option
+                                            {'s',	't',	'&',	'*',	' ',	' ',	'@',	' ',	' ',	' ',	'{',	' ',	' ',	' ',	' '},//Option
+                                            {' ',	' ',	' ',	' ',	' ',	' ',	'i',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' '},//Start
+                                            {' ',	' ',	' ',	' ',	' ',	' ',	' ',	'"',	' ',	' ',	' ',	' ',	' ',	' ',	' '},//LEFTSTICK
+                                            {' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	':',	' ',	' ',	' ',	' ',	' ',	' '},//RIGHTSTICK
+                                            {'E',	'f',	'r',	'V',	' ',	' ',	' ',	' ',	';',	353,	' ',	'<',	'>',	'\'',	'.'},//LEFTSHOULDER
+                                            {'D',	'a',	'w',	'W',	' ',	' ',	' ',	' ',	' ',	' ',	'\t',	339,	338,	'Z',	'z'},//RIGHTSHOULDER
+                                            {' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	259,	' ',	' ',	' '},//UP
+                                            {'b',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	258,	' ',	' '},//DOWN
+                                            {' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	260,	' '},//LEFT
+                                            {' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	261}};//RIGHT
 
     void handle_button_event(SDL_Event& event)
     {
         switch (event.type) {
-        case SDL_CONTROLLERBUTTONDOWN: 
-        // {
-        //    int button = event.cbutton.button;
-        //    int state = event.cbutton.state;
-        //    Uint32 now = event.cbutton.timestamp;
-        //    switch (button) {
-        //    case SDL_CONTROLLER_BUTTON_LEFTSHOULDER:
-        //        break;
-        //    }
-        //}
-        //break;
-        case SDL_CONTROLLERBUTTONUP:
-        {
+        case SDL_CONTROLLERBUTTONDOWN:
+            gpSequence.push_back(event.cbutton.button);
+            break;
+        case SDL_CONTROLLERBUTTONUP: {
             int button = event.cbutton.button;
-            int state = event.cbutton.state;
-            Uint32 now = event.cbutton.timestamp;
             task_t& task = all_tasks[button];
-            if (state) { //Tecla presionada
-                switch (button) {
-                case SDL_CONTROLLER_BUTTON_DPAD_UP:
-                    send_input(KEY_UP, input_event_t::keyboard_char);
-                    break;
-                case SDL_CONTROLLER_BUTTON_DPAD_DOWN://
-                    send_input(KEY_DOWN, input_event_t::keyboard_char);
-                    break;
-                case SDL_CONTROLLER_BUTTON_DPAD_LEFT://13
-                    send_input(KEY_LEFT, input_event_t::keyboard_char);
-                    break;
-                case SDL_CONTROLLER_BUTTON_DPAD_RIGHT://14
-                    send_input(KEY_RIGHT, input_event_t::keyboard_char);
-                    break;
-                case SDL_CONTROLLER_BUTTON_A:
-                    send_input(KEY_ESCAPE, input_event_t::keyboard_code);
-                    break;
-                case SDL_CONTROLLER_BUTTON_B:
-                    send_input('\n', input_event_t::keyboard_char);
-                    break;
-                    /*                    case SDL_CONTROLLER_BUTTON_BACK:    // BACK -> Escape
-                                            send_input(KEY_ESCAPE, input_event_t::keyboard_code);
-                                            break;
-                                        case SDL_CONTROLLER_BUTTON_START:   // START -> Enter
-                                            send_input('\n', input_event_t::keyboard_char);
-                                            break;
-                    */
-                default:
-                    send_input(button);
-                    //schedule_task(task, now + repeat_delay, buttons_map[button], state);
-                }
-                cancel_task(task);
+            if (gpSequence.size() == 1) {
+                send_input(keys[gpSequence[0]][gpSequence[0]], input_event_t::keyboard_char);
             }
-            //else {//Tecla liberada
-                /*cancel_task(task);*/
-            //}
+            if (gpSequence.size() == 2) {
+                send_input(keys[gpSequence[0]][gpSequence[1]], input_event_t::keyboard_char);
+            }
+            cancel_task(task);
+            gpSequence.clear();
         }
         }
     }
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+
 
     void handle_scheduler_event(SDL_Event& event)
     {
