@@ -45,6 +45,13 @@ namespace gamepad
         int state;
     };
 
+    struct ModButton {
+        Uint8 button;
+        bool mod;
+    };
+
+    std::optional<JsonValue> json_gpbng;
+
     static constexpr int max_tasks = max_buttons + max_sticks + max_triggers + 1;
     //constexpr int buttons_task_index  = 0;
     static constexpr int sticks_task_index = max_buttons;
@@ -135,7 +142,7 @@ namespace gamepad
         timer_id = SDL_AddTimer(50, timer_func, nullptr);
         printErrorIf(timer_id == 0, "SDL_AddTimer failed");
 
-        json_gpbng = json_loader::from_path_opt( PATH_INFO::gamepadkeybindings() );
+        json_gpbng = json_loader::from_path_opt(PATH_INFO::gamepadkeybindings());
 
     }
 
@@ -300,71 +307,67 @@ namespace gamepad
     }
 
 
-   ////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+     // std::vector<Uint8> gpSequence;
+    std::vector<ModButton> gpSequence;
+    //A     B       X       Y       OPTION  OPTION  START   LS      RS      LSHR     RSHR   UP      DOWN    LEFT    RIGHT     
+    std::vector<std::vector<int>> keys = { {27,	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' '},//A
+                                            {' ',	'\n',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' '},//B
+                                            {' ',	' ',	'g',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' '},//X
+                                            {' ',	' ',	' ',	'e',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' '},//Y
+                                            {'s',	't',	'&',	'*',	' ',	' ',	'@',	' ',	' ',	' ',	'{',	' ',	' ',	' ',	' '},//Option
+                                            {'s',	't',	'&',	'*',	' ',	' ',	'@',	' ',	' ',	' ',	'{',	' ',	' ',	' ',	' '},//Option
+                                            {' ',	' ',	' ',	' ',	' ',	' ',	'i',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' '},//Start
+                                            {' ',	' ',	' ',	' ',	' ',	' ',	' ',	'"',	' ',	' ',	' ',	' ',	' ',	' ',	' '},//LEFTSTICK
+                                            {' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	':',	' ',	' ',	' ',	' ',	' ',	' '},//RIGHTSTICK
+                                            {'E',	'f',	'r',	'V',	' ',	' ',	' ',	' ',	';',	353,	' ',	'<',	'>',	'\'',	'.'},//LEFTSHOULDER
+                                            {'D',	'a',	'w',	'W',	' ',	' ',	' ',	' ',	' ',	' ',	'\t',	339,	338,	'Z',	'z'},//RIGHTSHOULDER
+                                            {' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	259,	' ',	' ',	' '},//UP
+                                            {'b',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	258,	' ',	' '},//DOWN
+                                            {' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	260,	' '},//LEFT
+                                            {' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	261} };//RIGHT
 
-struct ModButton {
-    Uint8 button;
-    bool mod;
-};
-
-// 
-// std::vector<Uint8> gpSequence;
-std::vector<ModButton> gpSequence;
-                                        //A     B       X       Y       OPTION  OPTION  START   LS      RS      LSHR     RSHR   UP      DOWN    LEFT    RIGHT     
-std::vector<std::vector<int>> keys = {  {27,	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' '},//A
-                                        {' ',	'\n',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' '},//B
-                                        {' ',	' ',	'g',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' '},//X
-                                        {' ',	' ',	' ',	'e',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' '},//Y
-                                        {'s',	't',	'&',	'*',	' ',	' ',	'@',	' ',	' ',	' ',	'{',	' ',	' ',	' ',	' '},//Option
-                                        {'s',	't',	'&',	'*',	' ',	' ',	'@',	' ',	' ',	' ',	'{',	' ',	' ',	' ',	' '},//Option
-                                        {' ',	' ',	' ',	' ',	' ',	' ',	'i',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' '},//Start
-                                        {' ',	' ',	' ',	' ',	' ',	' ',	' ',	'"',	' ',	' ',	' ',	' ',	' ',	' ',	' '},//LEFTSTICK
-                                        {' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	':',	' ',	' ',	' ',	' ',	' ',	' '},//RIGHTSTICK
-                                        {'E',	'f',	'r',	'V',	' ',	' ',	' ',	' ',	';',	353,	' ',	'<',	'>',	'\'',	'.'},//LEFTSHOULDER
-                                        {'D',	'a',	'w',	'W',	' ',	' ',	' ',	' ',	' ',	' ',	'\t',	339,	338,	'Z',	'z'},//RIGHTSHOULDER
-                                        {' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	259,	' ',	' ',	' '},//UP
-                                        {'b',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	258,	' ',	' '},//DOWN
-                                        {' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	260,	' '},//LEFT
-                                        {' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	261}};//RIGHT
-
-void handle_button_event(SDL_Event& event)
-{
+    void handle_button_event(SDL_Event& event)
+    {
         switch (event.type) {
 
-            case SDL_CONTROLLERBUTTONDOWN:
+        case SDL_CONTROLLERBUTTONDOWN:
 
-                for(gamepad::ModButton &mButton : gpSequence) {
-                    mButton.mod = true;
-                }
+            for (gamepad::ModButton& mb : gpSequence) {
+                mb.mod = true;
+            }
 
-                ModButton mButton;
-                mButton.button=event.cbutton.button;
-                mButton.mod=false;
-                gpSequence.push_back(mButton);
-            
-                break;
+            ModButton mButton;
+            mButton.button = event.cbutton.button;
+            mButton.mod = false;
+            gpSequence.push_back(mButton);
 
-            case SDL_CONTROLLERBUTTONUP: 
-                int button = event.cbutton.button;
-                task_t& task = all_tasks[button];
+            break;
 
-                if(gpSequence.size()>0){ //Previene el evento cuando se haya ejecutado "gpSequence.clear();"
+        case SDL_CONTROLLERBUTTONUP:
+            int button = event.cbutton.button;
+            task_t& task = all_tasks[button];
+
+            if (gpSequence.size() > 0) { //Previene el evento cuando se haya ejecutado "gpSequence.clear();"
+                if (gpSequence[gpSequence.size() - 1].mod == false) {
+
                     if (gpSequence.size() == 1) {
-                        send_input(keys[gpSequence[0]][gpSequence[0]], input_event_t::keyboard_char);
+                        send_input(keys[gpSequence[0].button][gpSequence[0].button], input_event_t::keyboard_char);
+                        cancel_task(task);
                     }
-                    if (gpSequence.size() == 2) {
-                        send_input(keys[gpSequence[0]][gpSequence[1]], input_event_t::keyboard_char);
-                    }
-                    cancel_task(task);
 
-                    if(gpSequence[gpSequence.size()-1].mod==false && gpSequence[gpSequence.size()-1].button==event.cbutton.button){
-                        gpSequence.pop_back();
+                    if (gpSequence.size() == 2) {
+                        send_input(keys[gpSequence[0].button][gpSequence[1].button], input_event_t::keyboard_char);
+                        cancel_task(task);
                     }
-                    else{
-                        gpSequence.clear();
-                    }
+
+                    gpSequence.pop_back();
                 }
-                break;
+                else {
+                    gpSequence.clear();
+                }
+            }
+            break;
         }
     }
     ////////////////////////////////////////////////////////////////////////////////////////////////
