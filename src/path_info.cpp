@@ -311,6 +311,10 @@ cata_path PATH_INFO::keybindings_vehicle()
 {
     return datadir_path_value / "raw" / "keybindings" / "vehicle.json";
 }
+cata_path PATH_INFO::gamepadkeybindings()
+{
+    return datadir_path_value / "raw" / "gamepadkeybindings.json";
+}
 std::string PATH_INFO::keymap()
 {
     return keymap_value;

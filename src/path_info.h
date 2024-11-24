@@ -70,6 +70,7 @@ cata_path gfxdir();
 cata_path help();
 cata_path jsondir();
 cata_path keybindings();
+cata_path gamepadkeybindings();
 cata_path keybindings_vehicle();
 cata_path langdir_path();
 cata_path lastworld();

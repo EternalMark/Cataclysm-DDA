@@ -2,6 +2,11 @@
 #include "sdl_gamepad.h"
 #include "debug.h"
 
+
+#include "json.h"
+#include "json_loader.h"
+
+
 #define dbg(x) DebugLog((x),D_SDL) << __FILE__ << ":" << __LINE__ << ": "
 
 namespace gamepad
@@ -129,6 +134,9 @@ namespace gamepad
 
         timer_id = SDL_AddTimer(50, timer_func, nullptr);
         printErrorIf(timer_id == 0, "SDL_AddTimer failed");
+
+        json_gpbng = json_loader::from_path_opt( PATH_INFO::gamepadkeybindings() );
+
     }
 
     void quit()
@@ -292,43 +300,71 @@ namespace gamepad
     }
 
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    std::vector<Uint8> gpSequence;
-                                            //A     B       X       Y       OPTION  OPTION  START   LS      RS      LSHR     RSHR   UP      DOWN    LEFT    RIGHT     
-    std::vector<std::vector<int>> keys = {  {27,	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' '},//A
-                                            {' ',	'\n',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' '},//B
-                                            {' ',	' ',	'g',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' '},//X
-                                            {' ',	' ',	' ',	'e',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' '},//Y
-                                            {'s',	't',	'&',	'*',	' ',	' ',	'@',	' ',	' ',	' ',	'{',	' ',	' ',	' ',	' '},//Option
-                                            {'s',	't',	'&',	'*',	' ',	' ',	'@',	' ',	' ',	' ',	'{',	' ',	' ',	' ',	' '},//Option
-                                            {' ',	' ',	' ',	' ',	' ',	' ',	'i',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' '},//Start
-                                            {' ',	' ',	' ',	' ',	' ',	' ',	' ',	'"',	' ',	' ',	' ',	' ',	' ',	' ',	' '},//LEFTSTICK
-                                            {' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	':',	' ',	' ',	' ',	' ',	' ',	' '},//RIGHTSTICK
-                                            {'E',	'f',	'r',	'V',	' ',	' ',	' ',	' ',	';',	353,	' ',	'<',	'>',	'\'',	'.'},//LEFTSHOULDER
-                                            {'D',	'a',	'w',	'W',	' ',	' ',	' ',	' ',	' ',	' ',	'\t',	339,	338,	'Z',	'z'},//RIGHTSHOULDER
-                                            {' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	259,	' ',	' ',	' '},//UP
-                                            {'b',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	258,	' ',	' '},//DOWN
-                                            {' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	260,	' '},//LEFT
-                                            {' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	261}};//RIGHT
+   ////////////////////////////////////////////////////////////////////////////////////////////////
 
-    void handle_button_event(SDL_Event& event)
-    {
+struct ModButton {
+    Uint8 button;
+    bool mod;
+};
+
+// 
+// std::vector<Uint8> gpSequence;
+std::vector<ModButton> gpSequence;
+                                        //A     B       X       Y       OPTION  OPTION  START   LS      RS      LSHR     RSHR   UP      DOWN    LEFT    RIGHT     
+std::vector<std::vector<int>> keys = {  {27,	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' '},//A
+                                        {' ',	'\n',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' '},//B
+                                        {' ',	' ',	'g',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' '},//X
+                                        {' ',	' ',	' ',	'e',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' '},//Y
+                                        {'s',	't',	'&',	'*',	' ',	' ',	'@',	' ',	' ',	' ',	'{',	' ',	' ',	' ',	' '},//Option
+                                        {'s',	't',	'&',	'*',	' ',	' ',	'@',	' ',	' ',	' ',	'{',	' ',	' ',	' ',	' '},//Option
+                                        {' ',	' ',	' ',	' ',	' ',	' ',	'i',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' '},//Start
+                                        {' ',	' ',	' ',	' ',	' ',	' ',	' ',	'"',	' ',	' ',	' ',	' ',	' ',	' ',	' '},//LEFTSTICK
+                                        {' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	':',	' ',	' ',	' ',	' ',	' ',	' '},//RIGHTSTICK
+                                        {'E',	'f',	'r',	'V',	' ',	' ',	' ',	' ',	';',	353,	' ',	'<',	'>',	'\'',	'.'},//LEFTSHOULDER
+                                        {'D',	'a',	'w',	'W',	' ',	' ',	' ',	' ',	' ',	' ',	'\t',	339,	338,	'Z',	'z'},//RIGHTSHOULDER
+                                        {' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	259,	' ',	' ',	' '},//UP
+                                        {'b',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	258,	' ',	' '},//DOWN
+                                        {' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	260,	' '},//LEFT
+                                        {' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	' ',	261}};//RIGHT
+
+void handle_button_event(SDL_Event& event)
+{
         switch (event.type) {
-        case SDL_CONTROLLERBUTTONDOWN:
-            gpSequence.push_back(event.cbutton.button);
-            break;
-        case SDL_CONTROLLERBUTTONUP: {
-            int button = event.cbutton.button;
-            task_t& task = all_tasks[button];
-            if (gpSequence.size() == 1) {
-                send_input(keys[gpSequence[0]][gpSequence[0]], input_event_t::keyboard_char);
-            }
-            if (gpSequence.size() == 2) {
-                send_input(keys[gpSequence[0]][gpSequence[1]], input_event_t::keyboard_char);
-            }
-            cancel_task(task);
-            gpSequence.clear();
-        }
+
+            case SDL_CONTROLLERBUTTONDOWN:
+
+                for(gamepad::ModButton &mButton : gpSequence) {
+                    mButton.mod = true;
+                }
+
+                ModButton mButton;
+                mButton.button=event.cbutton.button;
+                mButton.mod=false;
+                gpSequence.push_back(mButton);
+            
+                break;
+
+            case SDL_CONTROLLERBUTTONUP: 
+                int button = event.cbutton.button;
+                task_t& task = all_tasks[button];
+
+                if(gpSequence.size()>0){ //Previene el evento cuando se haya ejecutado "gpSequence.clear();"
+                    if (gpSequence.size() == 1) {
+                        send_input(keys[gpSequence[0]][gpSequence[0]], input_event_t::keyboard_char);
+                    }
+                    if (gpSequence.size() == 2) {
+                        send_input(keys[gpSequence[0]][gpSequence[1]], input_event_t::keyboard_char);
+                    }
+                    cancel_task(task);
+
+                    if(gpSequence[gpSequence.size()-1].mod==false && gpSequence[gpSequence.size()-1].button==event.cbutton.button){
+                        gpSequence.pop_back();
+                    }
+                    else{
+                        gpSequence.clear();
+                    }
+                }
+                break;
         }
     }
     ////////////////////////////////////////////////////////////////////////////////////////////////
